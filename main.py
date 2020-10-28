@@ -10,16 +10,20 @@ class Carte():
 
 class Paquet():
     def __init__(self, min, max, liste_valeurs):
-        self.__cards = []
+        self.__cartes = []
         self.construire(min, max, liste_valeurs)
+
+    @property
+    def get_cartes(self):
+        return self.__cartes
 
     def construire(self, min, max, liste_valeurs):
         for s in liste_valeurs:
             for valeur in range(min, max):
-                self.__cards.append(Carte(s, valeur))
+                self.__cartes.append(Carte(s, valeur))
 
     def afficher(self):
-        for c in self.__cards:
+        for c in self.__cartes:
             print("{} of {}".format(c.valeur, c.suite))
 
 
@@ -39,23 +43,28 @@ class Joueur():
 
 class Jeu():
     def __init__(self, cartes, joueurs):
-        self.cartes = cartes
+        self.__cartes = cartes
         self.__set_joueurs(joueurs)
 
     def __set_joueurs(self, joueurs):
         liste_joueurs = []
         for joueur in joueurs:
-            liste_joueurs.append(joueur)
+            liste_joueurs.append(Joueur(joueur))
         self.__joueurs = liste_joueurs
+
+    # def __generer_paquet(self, cartes):
+    #     paquet_cartes = []
+    #     for carte in cartes:
+    #         paquet_cartes.append(carte)
+    #
 
     def afficher(self):
         print("Joueurs: ")
         for joueur in self.__joueurs:
             print(joueur.surnom)
         print("Paquet de cartes:")
-
-
-
+        for carte in self.__cartes.__cartes:
+            carte.afficher()
 
     # def distribuerCartes(self):
 
@@ -63,6 +72,7 @@ class Jeu():
 def main():
     joueurs = ["Paul", "Mike", "Violet", "Alex"]
     jeu = Jeu(Paquet(1,14, ["Hearts", "Club", "Diamond", "Clover"]), joueurs)
+    jeu.afficher()
     pass
 
 
