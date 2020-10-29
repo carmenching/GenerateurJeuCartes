@@ -1,4 +1,5 @@
 import random
+import config
 
 class Carte:
     def __init__(self, suite, valeur):
