@@ -1,6 +1,5 @@
 import random
-from outil import Outil
-import generer
+import objetJeu
 
 class Joueur:
     """
@@ -51,15 +50,25 @@ class Joueur:
         self.__main.append(carte)
 
     def ajouter_debut_main(self, carte):
-        """ajouter une carte au début du main de joueur"""
+        """ajouter une carte au début du main de joueur
+        Parameters:
+        -----------
+        carte : Carte
+            l'objet carte à ajouter au main du joueur
+        """
+
         self.__main.insert(0, carte)
     
     def ajouter_liste_cartes_debut_main(self, cartes):
-        """ajouter une liste de cartes au début du main de joueur """
+        """ajouter une liste de cartes au début du main de joueur 
+        Parameters:
+        -----------
+        cartes : list
+            liste d'objet carte à ajouter au main du joueur
+        """
         for carte in cartes:
             self.__main.insert(0, carte)
 
-    # joueur une carte 
     def jouer_carte(self):
         """ajouter une liste de cartes au début du main de joueur """
         carte_joue = self.__main[-1]
@@ -124,19 +133,18 @@ class Jeu:
         for joueur in self._joueurs:
             print(joueur.surnom)
 
-    # afficher les paquet
     def _afficherPaquet(self):
         """Afficher le paquet"""
         print("Paquet de cartes:")
-        self._cartes.afficher()
+        self._paquet.afficher()
 
     def melangerCarte(self):
         """Mélanger les cartes dans le paquet"""
-        self._cartes.melanger_cartes()
+        self._paquet.melanger_cartes()
 
-    def distribuerCarte(self):
+    def distribuerCarte(self, nbrCartes):
         """Distribuer les cartes dans le paquet aux joueurs"""
-        self._cartes.distribuer_cartes(self._joueurs)
+        self._paquet.distribuer_cartes(self._joueurs, nbrCartes)
 
     def construirePaquet(self, nbrCartes, listeValeursCartes):
         """Distribuer les cartes dans le paquet aux joueurs
@@ -148,28 +156,45 @@ class Jeu:
         listeValeursCartes : str
             Une liste de valeurs pour la création du paquet de cartes initial
         """
-        self._cartes = generer.Paquet(nbrCartes, listeValeursCartes)
+        self._paquet = objetJeu.Paquet()
+        self._paquet.construire(nbrCartes, listeValeursCartes)
 
-    # def construirePioches(self, pioches):
-    #     if pioches is not None:
-    #         self._pioches = {}
-    #         for nbr in range(pioches):
-    #             self._pioches[nbr] = Pioche()
+    def construirePioches(self, nbrPioches):
+        """Construire des pioches pour le jeu
+        
+        Parameters:
+        -----------
+        pioches : int
+            Le nombre de pioche à créer pour jeu
+        """
+        self._pioches = {}
+        for nbr in range(nbrPioches):
+            self._pioches[nbr] = objetJeu.Pioche()
 
-    # def ajouterCartesDansPioche(self, piocheNbr, nbrCartes):
-    #     cartes_a_disposer = random.sample(self._cartes.get_cartes(), nbrCartes)
-    #     self._pioches[piocheNbr - 1].ajouter_cartes(cartes_a_disposer)
-    #     pioche = self._pioches[piocheNbr - 1]
-    #     self._cartes.enlever_cartes(cartes_a_disposer)
+    def ajouterCartesDansPioche(self, piocheNbr, cartes):
+        """Ajouter les cartes dans la pioche sélectionné
+        
+        Parameters:
+        -----------
+        piocheNbr : int
+            L'id en entier de pioche
+        cartes : list
+            le nombre de carte
+        """
+        self._pioches[piocheNbr - 1].ajouter_cartes(cartes)
+        self._paquet.enlever_cartes(cartes)
 
-    # def get_pioche(self):
-    #     return self._pioches
+    def get_pioche(self):
+        """Getter défaut des pioches"""
+        return self._pioches
 
-    # def afficher_pioche(self):
-    #     for nbr in self._pioches:
-    #         pioche = self._pioches[nbr]
-    #         pioche.afficher()    
-
+    def ajouterCartesAuPlateuJeu(self):
+        """Ajouter la reste de cartes non distribué dans le plateau de jeu"""
+        if len(self._paquet._cartes) != 0:
+            print("cartes restant")
+            self._plateauJeu = objetJeu.PlateauJeu()
+            self._plateauJeu.ajouter_cartes(self._paquet._cartes)
+         
 
 class Partie:
     """Classe partie qui stocke les informations des joueurs
@@ -205,7 +230,6 @@ class Partie:
 
 class Bataille(Jeu):
     """Teste création d'un jeu de bataille en héritant la classe Jeu, attributs : idem classe Jeu"""
-
     def commencer_partie(self):
         """lancer la partie"""
         self.__partie = Partie(self._joueurs)
@@ -246,6 +270,7 @@ class Bataille(Jeu):
         for carte in pot:
             print(carte.afficher()+ ", ", end="")
             tmp.append(carte.valeur)
+        print("")
         
         if len(set(tmp)) != len(tmp):
             tmp_set = set(tmp)
@@ -254,24 +279,79 @@ class Bataille(Jeu):
             for joueur in joueurs:
                 if max(tmp) == joueur.carte_actuel.valeur:
                     joueurs_bataille.append(joueur)
-                    for joueur in joueurs_bataille:
-                        if len(joueur.get_main()) != 0:
-                            pot.append(joueur.jeter_carte())
-                        else:
-                            return
-            #**
-            joueur_gagnant = self.derouler_manche(joueurs_bataille)
-            for carte in pot:
-                joueur_gagnant.ajouter_debut_main(carte)
+            if len(joueurs_bataille) > 1:
+                for joueur in joueurs_bataille:
+                    if len(joueur.get_main()) != 0:
+                        pot.append(joueur.jeter_carte())
+                    else:
+                        return
+                self.commencer_bataille(joueurs_bataille, pot)
+
         else:
-            
             for joueur in joueurs:
                 if max(tmp) == joueur.carte_actuel.valeur:
                     print("joueur gagnant manche: "+ joueur.surnom)
                     for carte in pot:
                         joueur.ajouter_debut_main(carte)
-                    return joueur
+                    return
                                 
+    def commencer_bataille(self, joueurs, potPrecedent):
+        pot = []
+        print("cartes actuelles dans le pot avant la bataille:")
+        for carte in potPrecedent:
+            print(carte.afficher()+ ", ", end="")
+        print("")
+        print("----------------------------------------------")
+        print("Bataille!")
+        # chaque joueur joue une carte
+        for joueur in joueurs:
+            print("joueur "+ joueur.surnom + " joue:")
+            if len(joueur.get_main()) != 0 : 
+                joueur.jouer_carte()
+                pot.append(joueur.carte_actuel)
+            else:
+                self.__partie.joueurs_perdu.append(joueur)
+                self.__partie.joueurs_en_cours.remove(joueur)
+                return
+
+        # évaluer la carte dans le pot
+        tmp = []
+        print("cartes actuelles dans le pot:")
+        for carte in pot:
+            print(carte.afficher()+ ", ", end="")
+            tmp.append(carte.valeur)
+        print("")
+        print("----------------------------------------------")
+
+
+        # vérifier s'il existe des cartes avec les mêmes valeur
+        if len(set(tmp)) != len(tmp):
+            tmp_set = set(tmp)
+            tmp = list(tmp_set)
+            joueurs_bataille = []
+            for joueur in joueurs:
+                if max(tmp) == joueur.carte_actuel.valeur:
+                    joueurs_bataille.append(joueur)
+            # si deux ou plus de joueurs ou plus ont joué une carte de même valeur
+            if len(joueurs_bataille) > 1:
+                for joueur in joueurs_bataille:
+                    if len(joueur.get_main()) != 0:
+                        pot.append(joueur.jeter_carte())
+                    else:
+                        return
+                self.commencer_bataille(joueurs_bataille, pot)
+
+        else:
+            for joueur in joueurs:
+                if max(tmp) == joueur.carte_actuel.valeur:
+                    print("joueur gagnant la bataille: "+ joueur.surnom)
+                    for carte in pot:
+                        joueur.ajouter_debut_main(carte)
+                    joueur.ajouter_liste_cartes_debut_main(potPrecedent)
+                    return
+
+        print("----------------------------------------------")
+                      
     def verifier_main(self):
         """à la fin de chaque manche, les mains de chaque joueur sont vérifiés"""
         for joueur in self.__partie.joueurs_en_cours:
@@ -286,3 +366,5 @@ class Bataille(Jeu):
             return True
         else:
             return False
+
+    
